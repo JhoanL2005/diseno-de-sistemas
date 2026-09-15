@@ -1,6 +1,6 @@
-FROM python:3.9-slim
+FROM python:3.11-slim
 WORKDIR /app
-COPY requirements.py .
+COPY requirements.txt .
 RUN pip install requirements.txt
-COPY ..
+COPY . .
 CMD ["python", "test_singleton.py"]
