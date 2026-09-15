@@ -1,6 +1,6 @@
 FROM python:3.11-slim
 WORKDIR /app
 COPY requirements.txt .
-RUN pip install requirements.txt
+RUN pip install -r requirements.txt
 COPY . .
-CMD ["python", "test_singleton.py"]
+CMD ["python", "-m" ,"test_singleton.py"]
