@@ -1,3 +1,4 @@
+import copy
 class Computadora:
     def __init__(self):
         self.cpu = None
@@ -6,12 +7,15 @@ class Computadora:
         self.gpu = None
         self.wifi = None
 
-    def mostrar_configuracion(self):
+    def mostrar(self):
         print(f"CPU: {self.cpu}")
         print(f"RAM: {self.ram}")
         print(f"Disco: {self.disco}")
         print(f"GPU: {self.gpu}")
         print(f"WiFi: {self.wifi}")
+
+    def clonar(self):
+        return copy.deepcopy(self)
 
 class ComputadoraBuilder:
     def __init__(self):
@@ -44,10 +48,17 @@ def main():
 
     # aqui hay mas codigo
 
-    pc_builder = pc_builder.add_ram(4).add_gpu(18)
+    pc_builder = pc_builder.add_ram(128).add_gpu(18)
     pc_builder = pc_builder.add_disco(1).add_cpu(20).add_wifi(True)
 
     pc_gaming = pc_builder.build()
-    pc_gaming.mostrar_configuracion()
+    pc_gaming.mostrar()
+
+    print("\nClonando la computadora de gaming...\n")
+
+    pc_work = pc_gaming.clonar()
+    pc_work.ram = 64
+
+    pc_work.mostrar()
 
 main()
