@@ -1,10 +1,3 @@
-"""PATRÓN ABSTRACT FACTORY: familias completas de personajes según el mundo.
-
-FantasyFactory -> Guerrero + Dragón
-SciFiFactory   -> Soldado + Alien
-
-Incluye la entidad Mundo (Fantasía, Ciencia Ficción) del diagrama de dominio.
-"""
 from abc import ABC, abstractmethod
 
 from factory import PersonajeFactory
@@ -13,11 +6,11 @@ from factory import PersonajeFactory
 class MundoFactory(ABC):
     @abstractmethod
     def crear_jugador(self):
-        ...
+        pass
 
     @abstractmethod
     def crear_enemigo(self):
-        ...
+        pass
 
 
 class FantasyFactory(MundoFactory):
