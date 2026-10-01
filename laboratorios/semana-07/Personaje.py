@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from .StrategyAttack import EstrategiaAtaque, AtaqueNormal
+from .StrategyAttack import AtaqueNormal
 
 class Personaje(ABC):
     def __init__(self, nombre, vida, ataque):
@@ -26,14 +26,28 @@ class Enemigo(Personaje):
     estrategia = AtaqueNormal() 
 
 class Soldado(Jugador):
-    def __init__(self, nombre, vida, ataque):
-        super().__init__("Guerrero", 100, 15)
+    def __init__(self):
+        super().__init__("Soldado", 100, 10)
 class Guerrero(Jugador):
-    def __init__(self, nombre, vida, ataque):
+    def __init__(self):
         super().__init__("Guerrero", 100, 20)
 class Dragon(Enemigo):
-    def __init__(self, nombre, vida, ataque):
+    def __init__(self):
         super().__init__("Dragon", 150, 15)
 class Alien(Enemigo):
-    def __init__(self, nombre, vida, ataque):
+    def __init__(self):
         super().__init__("Alien", 100, 10)
+
+class PersonajeFactory:
+    @staticmethod
+    def crear(tipo):
+        if tipo == "soldado":
+            return Soldado()
+        elif tipo == "guerrero":
+            return Guerrero()
+        elif tipo == "dragon":
+            return Dragon()
+        elif tipo == "alien":
+            return Alien()
+        else:
+            raise ValueError("Tipo de personaje desconocido")
