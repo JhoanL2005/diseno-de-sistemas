@@ -1,3 +1,6 @@
+"""PATRÓN SINGLETON: una única instancia de GameConfig (entidad Config del dominio)."""
+
+
 class GameConfig:
     _instancia = None
 
@@ -17,4 +20,5 @@ class GameConfig:
 
     @classmethod
     def multiplicador(cls, dificultad: str) -> float:
+        """Cuánto se escala la vida y el ataque del enemigo según la dificultad."""
         return cls.MULTIPLICADORES[dificultad]

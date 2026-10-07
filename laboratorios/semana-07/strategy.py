@@ -1,3 +1,4 @@
+"""PATRÓN STRATEGY: EstrategiaAtaque con ataqueNormal y ataqueFuerte intercambiables."""
 import random
 from abc import ABC, abstractmethod
 
@@ -11,6 +12,7 @@ class EstrategiaAtaque(ABC):
 
 
 class AtaqueNormal(EstrategiaAtaque):
+    """Daño igual al ataque base. Siempre acierta."""
     nombre = "Ataque normal"
 
     def calcular_danio(self, ataque):
@@ -18,6 +20,7 @@ class AtaqueNormal(EstrategiaAtaque):
 
 
 class AtaqueFuerte(EstrategiaAtaque):
+    """Doble de daño, pero con 30% de probabilidad de fallar."""
     nombre = "Ataque fuerte"
 
     def calcular_danio(self, ataque):
@@ -30,6 +33,7 @@ _ESTRATEGIAS = {"normal": AtaqueNormal, "fuerte": AtaqueFuerte}
 
 
 def crear_estrategia(clave: str) -> EstrategiaAtaque:
+    """Equivale a cambiarEstrategia("fuerte") del diagrama de secuencia."""
     try:
         return _ESTRATEGIAS[clave]()
     except KeyError:
