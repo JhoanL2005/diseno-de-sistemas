@@ -187,9 +187,17 @@ class Bloqueo:
         self.equipo_montaje = equipo_montaje
         self.cancha = None
         self.fecha_hora = None
+        self.codigo = f"BLOQUEO-{motivo.lower().replace(' ', '-')[:20]}"
+        self.solicitante = Administrador("ADMIN-BLOQUEO", "Sistema")
+        self.politica = AnulacionAdministrativa()
+        self.estado = "Bloqueado"
 
     def clone(self):
         return copy.deepcopy(self)
+
+    def procesar_cancelacion(self, hora_actual: datetime) -> str:
+        self.estado = "Bloqueo levantado"
+        return self.estado
 
 # ==========================================
 # 7. FACADE Y CONCURRENCIA
@@ -199,7 +207,7 @@ class ReservaFacade:
         self._calendario = {}  
         self._historial = []
         self._conflictos = []
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()
 
     def _obtener_fabrica_sede(self, cancha: Cancha) -> FabricaSede:
         return FabricaNorte() if cancha.sede == "Norte" else FabricaSur()
@@ -235,21 +243,28 @@ class ReservaFacade:
         return True
 
     def cancelar_reserva(self, reserva: Reserva, hora_actual: datetime, es_admin=False):
-        if es_admin:
+        if not isinstance(reserva, (Reserva, Bloqueo)):
+            print("Cancelación rechazada: el elemento no es una reserva ni un bloqueo válido.")
+            return
+
+        if es_admin and hasattr(reserva, 'politica'):
             reserva.politica = AnulacionAdministrativa()
-            
+
         resultado = reserva.procesar_cancelacion(hora_actual)
-        
+
         with self._lock:
             clave = (reserva.cancha.codigo, reserva.fecha_hora)
             if clave in self._calendario and self._calendario[clave] == reserva:
                 del self._calendario[clave]
 
-        if resultado == "No-Show":
-            reserva.solicitante.registrar_no_show(hora_actual)
-            print(f"No-Show: Falta registrada a {reserva.solicitante.nombre}. Total mes: {reserva.solicitante.conteo_no_shows}")
+        if isinstance(reserva, Reserva):
+            if resultado == "No-Show":
+                reserva.solicitante.registrar_no_show(hora_actual)
+                print(f"No-Show: Falta registrada a {reserva.solicitante.nombre}. Total mes: {reserva.solicitante.conteo_no_shows}")
+            else:
+                print(f"Cancelación exitosa: Estado -> {resultado}")
         else:
-            print(f"Cancelación exitosa: Estado -> {resultado}")
+            print(f"Bloqueo levantado: Estado -> {resultado}")
 
     def reservar_recurrente(self, builder: ReservaRecurrenteBuilder) -> bool:
         if not isinstance(builder.solicitante, Capitan):
@@ -292,24 +307,29 @@ class ReservaFacade:
 
     def consultar_historial(self, usuario: Usuario):
         print(f"\n--- Historial de {usuario.nombre} ---")
-        mias = [r for r in self._historial if r.solicitante == usuario]
+        mias = [r for r in self._historial if isinstance(r, Reserva) and r.solicitante == usuario]
         if not mias:
             print("El historial está vacío.")
+            return
         for r in mias:
             print(f"[{r.estado}] {r.codigo} - {r.fecha_hora.strftime('%Y-%m-%d %H:%M')}")
-            
+
     def resolver_conflictos(self, admin: Administrador):
         print("\n--- Resolución de Conflictos (Administrador) ---")
         if not self._conflictos:
             print("No hay conflictos pendientes.")
             return
-        
+
         for conf in self._conflictos:
             clave = (conf.cancha.codigo, conf.fecha_hora)
             res_anterior = self._calendario.get(clave)
-            print(f"Resolviendo sobrecupo en {conf.cancha.codigo}. Anulando reserva estándar a favor del Equipo Oficial.")
-            self.cancelar_reserva(res_anterior, datetime.now(), es_admin=True)
-            
+
+            if isinstance(res_anterior, Reserva):
+                print(f"Resolviendo sobrecupo en {conf.cancha.codigo}. Anulando reserva estándar a favor del Equipo Oficial.")
+                self.cancelar_reserva(res_anterior, datetime.now(), es_admin=True)
+            else:
+                print(f"Resolviendo sobrecupo en {conf.cancha.codigo}. No había reserva estándar vigente; se mantiene la prioridad del equipo oficial.")
+
             conf.estado = "Confirmada"
             self._calendario[clave] = conf
         self._conflictos.clear()

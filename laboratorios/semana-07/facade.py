@@ -1,12 +1,3 @@
-"""PATRÓN FACADE: GameFacade es la única puerta de entrada a la lógica del juego.
-
-Este archivo contiene, en este orden:
-  1. Partida (entidad del dominio).
-  2. Los 6 controles del diagrama de robustez, que GameFacade compone y oculta.
-  3. GameFacade.
-  4. La consola (boundaries: Menú de Mundo y Pantalla de Combate) y iniciar(),
-     que es lo único que llama main.py. La consola solo habla con GameFacade.
-"""
 import random
 import sys
 
@@ -29,10 +20,10 @@ class Partida:
         self.mundo = mundo
         self.jugador = jugador
         self.enemigo = enemigo
-        self.config = config          # reglas: se rige por una Config
+        self.config = config         
         self.estado = EN_CURSO
         self.ganador = None
-        self.motivo = None            # "ko" o "limite_turnos"
+        self.motivo = None            
         self.turno_actual = 0
 
 
@@ -43,7 +34,6 @@ class ControlMundo:
     MUNDOS = {"1": Fantasia, "2": CienciaFiccion}
 
     def solicitar_mundo(self, opcion: str):
-        """solicitarMundo(op) -> mundo"""
         if opcion not in self.MUNDOS:
             raise ValueError(f"Mundo desconocido: {opcion}")
         return self.MUNDOS[opcion]()
@@ -51,7 +41,6 @@ class ControlMundo:
 
 class ControlPersonajes:
     def crear_personajes(self, mundo):
-        """crearPersonajes(mundo) -> (jugador, enemigo), vía Abstract Factory."""
         return mundo.fabrica.crear_jugador(), mundo.fabrica.crear_enemigo()
 
 
@@ -67,7 +56,6 @@ class ControlConfig:
             self.config.numero_maximo_turnos = numero_maximo_turnos
 
     def obtener_reglas(self) -> dict:
-        """getRules() -> num_turnos_max, dificultad"""
         return {
             "numero_maximo_turnos": self.config.numero_maximo_turnos,
             "dificultad": self.config.dificultad,
@@ -75,7 +63,6 @@ class ControlConfig:
 
 
 class ControlPartida:
-    """Coordina la preparación de la partida (secuencia 1) y define su estado."""
 
     def __init__(self, control_mundo: ControlMundo,
                  control_personajes: ControlPersonajes,
@@ -85,14 +72,12 @@ class ControlPartida:
         self.config = control_config
 
     def iniciar_mundo(self, opcion: str) -> Partida:
-        """iniciarMundo(op): solicita mundo, crea personajes, pide reglas y crea la partida."""
         mundo = self.mundos.solicitar_mundo(opcion)
         jugador, enemigo = self.personajes.crear_personajes(mundo)
         reglas = self.config.obtener_reglas()
         return self.crear_partida(mundo, jugador, enemigo, reglas)
 
     def crear_partida(self, mundo, jugador, enemigo, reglas: dict) -> Partida:
-        """crearPartida(mundo, jugador, enemigo, config) -> partida"""
         k = GameConfig.multiplicador(reglas["dificultad"])   # la dificultad escala al enemigo
         enemigo.vida_max = int(enemigo.vida_max * k)
         enemigo.vida = enemigo.vida_max
@@ -100,7 +85,6 @@ class ControlPartida:
         return Partida(mundo, jugador, enemigo, reglas)
 
     def definir_estado(self, partida: Partida) -> str:
-        """Define estado: victoria, derrota o continuar."""
         j, e = partida.jugador, partida.enemigo
 
         if e.vida <= 0:
@@ -132,11 +116,9 @@ class ControlEstadisticas:
         }
 
     def obtener_estadisticas(self, jugador, enemigo) -> dict:
-        """obtenerEstadisticas() -> vida, ataque de ambos personajes"""
         return {"jugador": self._ficha(jugador), "enemigo": self._ficha(enemigo)}
 
     def recibir_danio(self, personaje, danio: int) -> int:
-        """recibirDanio(personaje, danio) -> vida restante"""
         return personaje.recibir_danio(danio)
 
 
@@ -145,7 +127,6 @@ class ControlAtaque:
         self.estadisticas = control_estadisticas
 
     def cambiar_estrategia(self, jugador: Jugador, clave: str):
-        """cambiarEstrategia("fuerte"): solo el Jugador tiene estrategia intercambiable."""
         if not isinstance(jugador, Jugador):
             raise TypeError("Solo el Jugador puede cambiar de estrategia")
         estrategia = crear_estrategia(clave)
@@ -153,8 +134,7 @@ class ControlAtaque:
         return estrategia
 
     def atacar(self, atacante, objetivo) -> dict:
-        """ataque(jugador): calcularDanio() y luego recibirDanio()"""
-        danio = atacante.estrategia.calcular_danio(atacante.ataque)   # Strategy
+        danio = atacante.estrategia.calcular_danio(atacante.ataque)   
         vida = self.estadisticas.recibir_danio(objetivo, danio)
         return {
             "atacante": atacante.nombre,
@@ -165,7 +145,6 @@ class ControlAtaque:
         }
 
     def turno_enemigo(self, enemigo, jugador) -> dict:
-        """turnoEnemigo()"""
         return self.atacar(enemigo, jugador)
 
 
@@ -184,7 +163,6 @@ class GameFacade:
     def configurar(self, dificultad: str, numero_maximo_turnos: int = None):
         self._config.configurar(dificultad, numero_maximo_turnos)
 
-    # --- Secuencia 1: preparación de la partida ---
     def iniciar_partida(self, opcion_mundo: str) -> dict:
         self._partida = self._partida_ctl.iniciar_mundo(opcion_mundo)
         return {
@@ -193,7 +171,6 @@ class GameFacade:
             "numero_maximo_turnos": self._partida.config["numero_maximo_turnos"],
         }
 
-    # --- Secuencia 2: turno de combate ---
     def obtener_estadisticas(self) -> dict:
         p = self._partida
         stats = self._estadisticas.obtener_estadisticas(p.jugador, p.enemigo)
@@ -220,7 +197,6 @@ class GameFacade:
         self._partida_ctl.definir_estado(self._partida)
         return eventos
 
-    # --- Resultado ---
     @property
     def terminada(self) -> bool:
         return self._partida_ctl.definir_estado(self._partida) != EN_CURSO
@@ -309,8 +285,6 @@ class PantallaCombate:
 
 
 def iniciar():
-    """Punto de entrada del juego. Es lo único que invoca main.py."""
-    # Sin terminal interactiva (docker run sin -it) el juego corre en modo demo
     automatico = not sys.stdin.isatty()
 
     print("=" * 44)
@@ -319,7 +293,3 @@ def iniciar():
     if automatico:
         print("(Modo demo: sin entrada interactiva, elige al azar.)")
         print("(Para jugar tú: docker run -it --rm game-patterns)\n")
-
-    juego = GameFacade()
-    MenuMundo(juego, automatico).mostrar()
-    PantallaCombate(juego, automatico).jugar()

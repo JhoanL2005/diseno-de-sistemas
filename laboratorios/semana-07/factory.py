@@ -1,9 +1,3 @@
-"""PATRÓN FACTORY: PersonajeFactory crea personajes según su tipo.
-
-Incluye las entidades Personaje, Jugador y Enemigo del diagrama de dominio.
-Solo el Jugador tiene una estrategia de ataque intercambiable; el enemigo
-ataca siempre con ataque normal.
-"""
 from abc import ABC
 
 from strategy import AtaqueNormal
@@ -25,7 +19,6 @@ class Personaje(ABC):
 
 
 class Jugador(Personaje):
-    """Personaje controlado por el usuario. Contexto del patrón Strategy."""
 
     def __init__(self, nombre: str, vida: int, ataque: int):
         super().__init__(nombre, vida, ataque)
@@ -36,7 +29,6 @@ class Jugador(Personaje):
 
 
 class Enemigo(Personaje):
-    """Personaje controlado por el sistema. Estrategia fija: ataque normal."""
 
     estrategia = AtaqueNormal()
 
